@@ -68,12 +68,22 @@
  *
  * QSPI peripheral expects high drive pin strength.
  */
-#define QSPI_PIN_INIT(_pin) nrf_gpio_cfg((_pin),                        \
+#ifdef CONFIG_SOC_SERIES_NRF53X
+#   define QSPI_PIN_INIT(_pin) nrf_gpio_cfg((_pin),                     \
+                                         NRF_GPIO_PIN_DIR_INPUT,        \
+                                         NRF_GPIO_PIN_INPUT_DISCONNECT, \
+                                         NRF_GPIO_PIN_NOPULL,           \
+                                         NRF_GPIO_PIN_H0H1,             \
+                                         NRF_GPIO_PIN_NOSENSE);         \
+    nrf_gpio_pin_control_select((_pin), NRF_GPIO_PIN_SEL_PERIPHERAL)
+#else
+#   define QSPI_PIN_INIT(_pin) nrf_gpio_cfg((_pin),                     \
                                          NRF_GPIO_PIN_DIR_INPUT,        \
                                          NRF_GPIO_PIN_INPUT_DISCONNECT, \
                                          NRF_GPIO_PIN_NOPULL,           \
                                          NRF_GPIO_PIN_H0H1,             \
                                          NRF_GPIO_PIN_NOSENSE)
+#endif
 
 #if !defined(USE_WORKAROUND_FOR_ANOMALY_121) && defined(NRF53_SERIES)
     // ANOMALY 121 - Configuration of QSPI peripheral requires additional steps.
@@ -463,6 +473,10 @@ nrfx_err_t nrfx_qspi_init(nrfx_qspi_config_t const * p_config,
                             NRFX_LOG_ERROR_STRING_GET(err_code));
             return err_code;
         }
+    }
+    else
+    {
+        return NRFX_ERROR_INVALID_STATE;
     }
 
     m_cb.p_buffer_primary = NULL;
